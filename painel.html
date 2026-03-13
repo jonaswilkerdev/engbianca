@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GestãoPW — Engibras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f5f7;--bg2:#fff;--bg3:#f0f1f4;--bg4:#e8eaee;
+  --sur:#edeef2;--sur2:#e2e4ea;
+  --bdr:rgba(0,0,0,.07);--bdr2:rgba(0,0,0,.13);
+  --tx:#111827;--tx2:#4b5563;--tx3:#9ca3af;
+  --green:#0f9e6a;--green-d:rgba(15,158,106,.1);--green-g:rgba(15,158,106,.2);
+  --amber:#b45309;--amber-d:rgba(180,83,9,.09);
+  --red:#dc2626;--red-d:rgba(220,38,38,.08);
+  --blue:#2563eb;--blue-d:rgba(37,99,235,.09);
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --r:10px;--rl:14px;--rx:18px;
+  --ease:.18s cubic-bezier(.4,0,.2,1);
+  --topbar:58px;--sidebar:224px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--sur2);border-radius:4px}
+
+/* ── LAYOUT ── */
+.app{display:grid;grid-template-columns:var(--sidebar) 1fr;grid-template-rows:var(--topbar) 1fr;min-height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{grid-column:1/-1;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:var(--topbar);position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{width:30px;height:30px;background:linear-gradient(135deg,#0f9e6a,#06724c);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;letter-spacing:-.5px;flex-shrink:0}
+.logo-name{font-size:14px;font-weight:600;letter-spacing:-.3px;color:var(--tx)}
+.logo-org{font-size:11px;color:var(--tx3)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.badge-alert{background:var(--red-d);border:1px solid rgba(220,38,38,.25);color:var(--red);font-size:11px;padding:4px 11px;border-radius:20px;font-weight:600;cursor:pointer;white-space:nowrap;transition:var(--ease)}
+.badge-alert:hover{background:rgba(220,38,38,.14)}
+.btn-top{background:var(--green);color:#fff;border:none;border-radius:var(--r);padding:7px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:6px;transition:var(--ease);white-space:nowrap}
+.btn-top:hover{background:#0b8059;box-shadow:0 4px 16px var(--green-g)}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;border-radius:var(--r);color:var(--tx2)}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--bg2);border-right:1px solid var(--bdr);padding:16px 10px;position:sticky;top:var(--topbar);height:calc(100vh - var(--topbar));overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.nav-sect{font-size:10px;font-weight:600;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;padding:14px 10px 6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:var(--r);font-size:13px;font-weight:500;color:var(--tx2);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:var(--ease);position:relative}
+.nav-item:hover{background:var(--bg3);color:var(--tx)}
+.nav-item.on{background:var(--green-d);color:var(--green);font-weight:600}
+.nav-item.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--green);border-radius:0 3px 3px 0}
+.ni{width:15px;height:15px;flex-shrink:0;opacity:.6}
+.nav-item.on .ni{opacity:1}
+.nbadge{margin-left:auto;background:var(--red-d);color:var(--red);font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center}
+
+/* ── MAIN ── */
+.main{padding:24px;overflow-y:auto}
+.tab{display:none}.tab.on{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PAGE HEADER ── */
+.ph{margin-bottom:22px}
+.pt{font-size:21px;font-weight:600;letter-spacing:-.5px;margin-bottom:3px}
+.ps{font-size:13px;color:var(--tx2)}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.kpi{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rl);padding:16px 18px;position:relative;transition:var(--ease);overflow:hidden}
+.kpi:hover{border-color:var(--bdr2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+.kpi-lbl{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.kpi-val{font-size:26px;font-weight:700;letter-spacing:-1px;margin-bottom:3px;line-height:1}
+.kpi-sub{font-size:11px;color:var(--tx3)}
+.kpi-pip{width:7px;height:7px;border-radius:50%;position:absolute;top:16px;right:16px}
+.kpi-sla{font-size:10px;font-weight:600;position:absolute;bottom:12px;right:14px;padding:2px 7px;border-radius:10px}
+.red .kpi-val{color:var(--red)}.red .kpi-pip{background:var(--red)}
+.amber .kpi-val{color:var(--amber)}.amber .kpi-pip{background:var(--amber)}
+.grn .kpi-val{color:var(--green)}.grn .kpi-pip{background:var(--green)}
+.neu .kpi-val{color:var(--tx)}.neu .kpi-pip{background:var(--tx3)}
+
+/* ── SEMAPHORE ── */
+.sema{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.02em}
+.sema::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.s-red{background:var(--red-d);color:var(--red)}.s-red::before{background:var(--red)}
+.s-amber{background:var(--amber-d);color:var(--amber)}.s-amber::before{background:var(--amber)}
+.s-green{background:var(--green-d);color:var(--green)}.s-green::before{background:var(--green)}
+.s-blue{background:var(--blue-d);color:var(--blue)}.s-blue::before{background:var(--blue)}
+.s-gray{background:var(--sur);color:var(--tx3)}.s-gray::before{background:var(--tx3)}
+
+/* ── SLA INDICATOR ── */
+.sla-ok{background:var(--green-d);color:var(--green)}
+.sla-risk{background:var(--amber-d);color:var(--amber)}
+.sla-breach{background:var(--red-d);color:var(--red)}
+
+/* ── ALERTS ── */
+.alerts{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.alert{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rl);padding:13px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;transition:var(--ease)}
+.alert:hover{border-color:var(--bdr2)}
+.alert.a-red{border-left:3px solid var(--red);background:linear-gradient(90deg,rgba(220,38,38,.04),transparent)}
+.alert.a-amber{border-left:3px solid var(--amber);background:linear-gradient(90deg,rgba(180,83,9,.04),transparent)}
+.alert-body{flex:1;min-width:0}
+.alert-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.alert-meta{font-size:11px;color:var(--tx3);line-height:1.5}
+.alert-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+
+/* ── GRID ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+
+/* ── CARD ── */
+.card{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rl);overflow:hidden}
+.ch{padding:13px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ct{font-size:13px;font-weight:600;letter-spacing:-.2px}
+.cb{padding:14px 16px}
+
+/* ── TABLE ── */
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 13px;text-align:left;font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--bdr);white-space:nowrap;background:var(--bg3)}
+td{padding:11px 13px;font-size:13px;border-bottom:1px solid var(--bdr);vertical-align:middle;color:var(--tx)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,0,0,.015)}
+.mono{font-family:var(--mono);font-size:11px;color:var(--tx3)}
+.fw{font-weight:600}
+
+/* ── BUTTONS ── */
+.btn{padding:7px 13px;border:1px solid var(--bdr2);background:var(--sur);border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;color:var(--tx);font-family:var(--font);transition:var(--ease);white-space:nowrap}
+.btn:hover{background:var(--sur2)}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-grn{background:var(--green-d);border-color:rgba(15,158,106,.3);color:var(--green)}
+.btn-grn:hover{background:rgba(15,158,106,.18)}
+.btn-red{background:var(--red-d);border-color:rgba(220,38,38,.25);color:var(--red)}
+
+/* ── FILTERS ── */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{padding:5px 13px;border-radius:20px;border:1px solid var(--bdr2);background:none;font-size:12px;font-weight:500;color:var(--tx3);cursor:pointer;transition:var(--ease);font-family:var(--font)}
+.chip:hover{border-color:var(--bdr2);color:var(--tx);background:var(--sur)}
+.chip.on{background:var(--green-d);border-color:rgba(15,158,106,.35);color:var(--green);font-weight:600}
+
+/* ── FORM ── */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.fi{display:flex;flex-direction:column;gap:5px}
+.fi label{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em}
+.fi input,.fi select,.fi textarea{background:var(--bg3);border:1px solid var(--bdr2);border-radius:var(--r);padding:8px 11px;font-size:13px;color:var(--tx);font-family:var(--font);transition:var(--ease);width:100%}
+.fi input:focus,.fi select:focus,.fi textarea:focus{outline:none;border-color:rgba(15,158,106,.5);box-shadow:0 0 0 3px rgba(15,158,106,.1)}
+.fi select option{background:var(--bg2)}
+.fi textarea{resize:vertical;min-height:70px}
+
+/* ── PROGRESS ── */
+.prog{height:5px;background:var(--sur);border-radius:4px;overflow:hidden}
+.pf{height:100%;border-radius:4px;transition:width .5s ease}
+.pf-g{background:var(--green)}.pf-a{background:var(--amber)}.pf-r{background:var(--red)}
+
+/* ── REV TIMELINE ── */
+.rtl{display:flex;align-items:center}
+.rn{width:19px;height:19px;border-radius:50%;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;flex-shrink:0}
+.rl{height:2px;flex:1;min-width:6px}
+.rn-d{background:rgba(15,158,106,.12);border-color:var(--green);color:var(--green)}
+.rn-c{background:rgba(180,83,9,.1);border-color:var(--amber);color:var(--amber)}
+.rn-p{background:transparent;border-color:var(--tx3);color:var(--tx3)}
+.rl-d{background:var(--green)}.rl-p{background:var(--tx3);opacity:.25}
+
+/* ── SLA BADGE ── */
+.sla{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px}
+
+/* ── NOTICE ── */
+.notice{background:var(--green-d);border:1px solid rgba(15,158,106,.2);border-radius:var(--rl);padding:13px 16px;font-size:13px;color:var(--green);margin-bottom:18px;line-height:1.65}
+.notice b{font-weight:700}
+
+/* ── MODAL ── */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:16px}
+.mo.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--bdr2);border-radius:var(--rx);padding:24px;width:min(540px,100%);max-height:90vh;overflow-y:auto;animation:fadeUp .2s ease}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.mt{font-size:16px;font-weight:700;letter-spacing:-.4px}
+.mf{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid var(--bdr)}
+
+/* ── ANALISTA CARD ── */
+.ac{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--bdr)}
+.ac:last-child{border-bottom:none}
+.av{width:36px;height:36px;border-radius:50%;background:var(--green-d);border:1.5px solid rgba(15,158,106,.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--green);flex-shrink:0}
+.an{font-size:13px;font-weight:600}
+.am{font-size:11px;color:var(--tx3);margin-top:2px}
+
+/* ── CHECKLIST ── */
+.cli{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--bdr)}
+.cli:last-child{border-bottom:none}
+.clb{width:17px;height:17px;border:1.5px solid var(--bdr2);border-radius:5px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease)}
+.clb.ck{background:var(--green);border-color:var(--green)}
+.clb.ck::after{content:'✓';font-size:10px;font-weight:800;color:#fff}
+.cll{font-size:13px;flex:1}
+
+/* ── COMMENT THREAD ── */
+.cmt{background:var(--bg3);border-radius:var(--r);padding:10px 12px;margin-bottom:8px}
+.cmt:last-child{margin-bottom:0}
+.cmt-id{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-bottom:4px}
+.cmt-txt{font-size:12px;color:var(--tx2);line-height:1.5}
+.cmt-meta{font-size:10px;color:var(--tx3);margin-top:5px}
+
+/* ── MOBILE NAV (bottom) ── */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--bdr);z-index:200;padding:0 4px 4px}
+.mnav-inner{display:flex;justify-content:space-around}
+.mn-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 10px;font-size:10px;font-weight:500;color:var(--tx3);cursor:pointer;border:none;background:none;font-family:var(--font);flex:1;border-radius:var(--r);transition:var(--ease)}
+.mn-item.on{color:var(--green)}
+.mn-icon{width:20px;height:20px}
+.mobile-fab{display:none;position:fixed;bottom:72px;right:16px;background:var(--green);color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:22px;cursor:pointer;box-shadow:0 4px 16px var(--green-g);z-index:201;align-items:center;justify-content:center;font-family:var(--font)}
+
+/* ── SECTION TITLE ── */
+.st{font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+
+/* ── ACTION BUTTONS ── */
+.action-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.abtn{background:var(--bg3);border:1px solid var(--bdr2);border-radius:var(--rl);padding:13px 14px;font-size:13px;font-weight:500;color:var(--tx);cursor:pointer;font-family:var(--font);transition:var(--ease);display:flex;align-items:center;gap:10px;text-align:left}
+.abtn:hover{background:var(--sur);border-color:var(--bdr2);transform:translateY(-1px)}
+.a-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.ai-g{background:var(--green-d)}.ai-b{background:var(--blue-d)}.ai-a{background:var(--amber-d)}
+.a-lbl{font-size:10px;color:var(--tx3);margin-top:2px}
+
+/* ── MEDIÇÃO MODULE ── */
+.mes-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--rl);padding:16px 18px;margin-bottom:12px}
+.mes-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.mes-month{font-size:14px;font-weight:700}
+.mes-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.mes-stat{background:var(--bg3);border-radius:var(--r);padding:10px 12px;text-align:center}
+.mes-n{font-size:20px;font-weight:700;letter-spacing:-.5px}
+.mes-l{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:800px){
+  .app{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .main{padding:16px 14px 80px}
+  .topbar{padding:0 14px}
+  .logo-org{display:none}
+  .badge-alert{display:none}
+  .hamburger{display:flex}
+  .mobile-nav{display:block}
+  .mobile-fab{display:flex}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .g2{grid-template-columns:1fr}
+  .g3{grid-template-columns:1fr 1fr}
+  .action-row{grid-template-columns:1fr}
+  .fg{grid-template-columns:1fr}
+  .kpi-val{font-size:22px}
+  .pt{font-size:18px}
+  .alert{flex-direction:column;gap:10px}
+  .alert-actions{width:100%;justify-content:flex-end}
+  /* hide less important table cols on mobile */
+  .hide-mob{display:none}
+}
+@media(max-width:480px){
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr}
+  th,td{padding:9px 10px}
+}
+
+/* ── SIDEBAR OVERLAY (mobile) ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:150;backdrop-filter:blur(2px)}
+.sidebar-mobile{display:none;position:fixed;left:0;top:0;bottom:0;width:240px;background:var(--bg2);border-right:1px solid var(--bdr2);z-index:160;padding:60px 10px 20px;flex-direction:column;gap:2px;overflow-y:auto;box-shadow:4px 0 24px rgba(0,0,0,.12)}
+.close-sidebar{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--tx2);font-size:20px;font-family:var(--font)}
+
+/* ID table mono */
+.id-tbl td{font-family:var(--mono);font-size:12px}
+.id-tbl th{font-family:var(--font)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── TOPBAR ── -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-mark">PW</div>
+    <div>
+      <div class="logo-name">GestãoPW — Engibras</div>
+      <div class="logo-org">Pátio de Manutenção · Metrô SP</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="badge-alert" id="badge-top" onclick="nav('rastreador',0)">● 4 parados</div>
+    <button class="btn-top" onclick="openModal()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>Novo doc</span>
+    </button>
+  </div>
+</header>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar-desktop">
+  <div class="nav-sect">Principal</div>
+  <button class="nav-item on" onclick="nav('visao',0,this)">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Visão Geral
+  </button>
+  <button class="nav-item" onclick="nav('rastreador',1,this)">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+    Rastreador
+    <span class="nbadge" id="nb1">4</span>
+  </button>
+  <button class="nav-item" onclick="nav('medicao',2,this)">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+    Medição Mensal
+  </button>
+  <button class="nav-item" onclick="nav('fornecedores',3,this)">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    Fornecedores
+  </button>
+  <button class="nav-item" onclick="nav('disciplinas',4,this)">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Disciplinas
+  </button>
+  <button class="nav-item" onclick="nav('kit',5,this)">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+    Kit Padronização
+  </button>
+</aside>
+
+<!-- ── SIDEBAR MOBILE OVERLAY ── -->
+<div class="sidebar-overlay" id="sb-overlay" onclick="toggleSidebar()"></div>
+<div class="sidebar-mobile" id="sb-mobile">
+  <button class="close-sidebar" onclick="toggleSidebar()">✕</button>
+  <div class="nav-sect">Principal</div>
+  <button class="nav-item on" onclick="nav('visao',0,this);toggleSidebar()">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Visão Geral
+  </button>
+  <button class="nav-item" onclick="nav('rastreador',1,this);toggleSidebar()">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+    Rastreador<span class="nbadge" style="margin-left:8px" id="nb1m">4</span>
+  </button>
+  <button class="nav-item" onclick="nav('medicao',2,this);toggleSidebar()">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+    Medição Mensal
+  </button>
+  <button class="nav-item" onclick="nav('fornecedores',3,this);toggleSidebar()">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    Fornecedores
+  </button>
+  <button class="nav-item" onclick="nav('disciplinas',4,this);toggleSidebar()">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Disciplinas
+  </button>
+  <button class="nav-item" onclick="nav('kit',5,this);toggleSidebar()">
+    <svg class="ni" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+    Kit Padronização
+  </button>
+</div>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+<!-- VISÃO GERAL -->
+<div class="tab on" id="tab-visao">
+  <div class="ph"><div class="pt">Visão Geral</div><div class="ps">Semáforo de status — padrão Playbook PW · Metrô SP</div></div>
+
+  <div class="kpi-grid">
+    <div class="kpi red">
+      <div class="kpi-pip"></div>
+      <div class="kpi-lbl">SLA Estourado</div>
+      <div class="kpi-val" id="k-sla">2</div>
+      <div class="kpi-sub">docs acima de 15 dias</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-pip"></div>
+      <div class="kpi-lbl">Parados</div>
+      <div class="kpi-val" id="k-par">4</div>
+      <div class="kpi-sub">aguardando retorno</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-pip"></div>
+      <div class="kpi-lbl">Com comentários</div>
+      <div class="kpi-val" id="k-com">5</div>
+      <div class="kpi-sub">ação pendente fornecedor</div>
+    </div>
+    <div class="kpi grn">
+      <div class="kpi-pip"></div>
+      <div class="kpi-lbl">Aprovados</div>
+      <div class="kpi-val" id="k-apv">6</div>
+      <div class="kpi-sub">liberados para fabricação</div>
+    </div>
+  </div>
+
+  <!-- Semaphore Legend -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="ch"><span class="ct">Semáforo de Fabricação</span><span style="font-size:11px;color:var(--tx3)">Regra de ouro: fabricação só inicia com status Verde</span></div>
+    <div class="cb">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div style="background:var(--green-d);border:1px solid rgba(15,158,106,.2);border-radius:var(--r);padding:12px 14px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><div style="width:10px;height:10px;border-radius:50%;background:var(--green)"></div><strong style="font-size:12px;color:var(--green)">Verde — Aprovado</strong></div>
+          <div style="font-size:11px;color:var(--tx2)">Documento aprovado. Fabricação liberada imediatamente.</div>
+        </div>
+        <div style="background:var(--amber-d);border:1px solid rgba(180,83,9,.2);border-radius:var(--r);padding:12px 14px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><div style="width:10px;height:10px;border-radius:50%;background:var(--amber)"></div><strong style="font-size:12px;color:var(--amber)">Amarelo — Com Comentários</strong></div>
+          <div style="font-size:11px;color:var(--tx2)">Devolvido com apontamentos. Fornecedor deve emitir próxima revisão.</div>
+        </div>
+        <div style="background:var(--red-d);border:1px solid rgba(220,38,38,.2);border-radius:var(--r);padding:12px 14px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px"><div style="width:10px;height:10px;border-radius:50%;background:var(--red)"></div><strong style="font-size:12px;color:var(--red)">Vermelho — Risco / SLA</strong></div>
+          <div style="font-size:11px;color:var(--tx2)">Parado além de 15 dias ou prazo de fabricação em risco.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="st">Alertas prioritários — ação imediata</div>
+  <div class="alerts">
+    <div class="alert a-red">
+      <div class="alert-body">
+        <div class="alert-title">Layout Ponte Rolante — Rev.5 &nbsp;<span style="font-family:var(--mono);font-size:10px;color:var(--tx3)">PAT-ME-0012</span></div>
+        <div class="alert-meta">SLA estourado: 8 dias sem retorno do analista Walter · Prazo de fabricação em risco · Rev.5 é a revisão máxima</div>
+      </div>
+      <div class="alert-actions"><span class="sema s-red">Vermelho</span><button class="btn btn-sm" onclick="nav('rastreador',1)">Ver doc</button></div>
+    </div>
+    <div class="alert a-red">
+      <div class="alert-body">
+        <div class="alert-title">Diagrama Rutec QD-07 &nbsp;<span style="font-family:var(--mono);font-size:10px;color:var(--tx3)">PAT-EL-0031</span></div>
+        <div class="alert-meta">SLA estourado: 12 dias parado com fornecedor · Rev.3 · Comentários do analista não atendidos</div>
+      </div>
+      <div class="alert-actions"><span class="sema s-red">Vermelho</span><button class="btn btn-sm" onclick="nav('rastreador',1)">Ver doc</button></div>
+    </div>
+    <div class="alert a-amber">
+      <div class="alert-body">
+        <div class="alert-title">QD-12 Diagrama Funcional &nbsp;<span style="font-family:var(--mono);font-size:10px;color:var(--tx3)">PAT-EL-0038</span></div>
+        <div class="alert-meta">6 dias aguardando fornecedor Rutec · Rev.1 com comentários abertos · Próximo da faixa SLA</div>
+      </div>
+      <div class="alert-actions"><span class="sema s-amber">Amarelo</span><button class="btn btn-sm" onclick="nav('rastreador',1)">Ver doc</button></div>
+    </div>
+    <div class="alert a-amber">
+      <div class="alert-body">
+        <div class="alert-title">Proj. Exec. Iluminação Vala &nbsp;<span style="font-family:var(--mono);font-size:10px;color:var(--tx3)">PAT-IL-0009</span></div>
+        <div class="alert-meta">5 dias sem resposta da Cistra · Rev.2 aguardando</div>
+      </div>
+      <div class="alert-actions"><span class="sema s-amber">Amarelo</span><button class="btn btn-sm" onclick="nav('rastreador',1)">Ver doc</button></div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div>
+      <div class="st">Status por disciplina</div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Disciplina</th><th>Docs</th><th>Semáforo</th></tr></thead>
+          <tbody>
+            <tr><td class="fw">Elétrica (Rutec)</td><td>9</td><td><span class="sema s-red">Vermelho</span></td></tr>
+            <tr><td class="fw">Mecânica (Pontes)</td><td>5</td><td><span class="sema s-red">Vermelho</span></td></tr>
+            <tr><td class="fw">Iluminação</td><td>4</td><td><span class="sema s-amber">Amarelo</span></td></tr>
+            <tr><td class="fw">Arquitetura</td><td>3</td><td><span class="sema s-green">Verde</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="st">Distribuição volumétrica por revisão</div>
+      <div class="card">
+        <div class="cb" id="vol-chart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RASTREADOR -->
+<div class="tab" id="tab-rastreador">
+  <div class="ph"><div class="pt">Rastreador de Revisões</div><div class="ps">Controle de SLA · 15 dias regulamentares do Metrô</div></div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end">
+    <div class="fi" style="flex:1;min-width:160px">
+      <label>Buscar</label>
+      <input type="text" id="srch" placeholder="Nome, ID, fornecedor..." oninput="renderDocs()">
+    </div>
+    <div class="fi" style="min-width:140px">
+      <label>Semáforo</label>
+      <select id="flt-sem" onchange="renderDocs()">
+        <option value="">Todos</option>
+        <option value="red">Vermelho</option>
+        <option value="amber">Amarelo</option>
+        <option value="green">Verde</option>
+      </select>
+    </div>
+    <div class="fi" style="min-width:140px">
+      <label>Disciplina</label>
+      <select id="flt-disc" onchange="renderDocs()">
+        <option value="">Todas</option>
+        <option>Elétrica</option><option>Mecânica</option>
+        <option>Arquitetura</option><option>Iluminação</option>
+      </select>
+    </div>
+    <div class="fi" style="min-width:130px">
+      <label>Analista</label>
+      <select id="flt-anal" onchange="renderDocs()">
+        <option value="">Todos</option>
+        <option>Walter M.</option><option>Analista EL</option><option>Analista AR</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tw">
+      <table>
+        <thead><tr><th>ID</th><th>Documento</th><th class="hide-mob">Disciplina</th><th>Fornecedor</th><th class="hide-mob">Revisão</th><th>Semáforo</th><th>SLA</th><th></th></tr></thead>
+        <tbody id="docs-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MEDIÇÃO MENSAL -->
+<div class="tab" id="tab-medicao">
+  <div class="ph"><div class="pt">Medição Mensal</div><div class="ps">Relatório de submissões e aprovações para faturamento</div></div>
+
+  <div class="notice"><b>Módulo de Faturamento:</b> Este relatório substitui planilhas manuais e serve como evidência técnica para o processo de medição mensal. Exportado automaticamente para a equipe financeira.</div>
+
+  <div id="mes-list"></div>
+
+  <div class="st" style="margin-top:8px">Histórico de comentários — Lições aprendidas</div>
+  <div class="card">
+    <div class="ch"><span class="ct">Comentários dos Analistas (Project Wise)</span><span style="font-size:11px;color:var(--tx3)">Repositório centralizado</span></div>
+    <div class="cb" id="comentarios-list"></div>
+  </div>
+</div>
+
+<!-- FORNECEDORES -->
+<div class="tab" id="tab-fornecedores">
+  <div class="ph"><div class="pt">Fornecedores</div><div class="ps">Performance e conformidade documental</div></div>
+
+  <div class="filters" id="forn-chips">
+    <button class="chip on" onclick="filtForn('',this)">Todos</button>
+    <button class="chip" onclick="filtForn('nao-conforme',this)">Fora do padrão</button>
+    <button class="chip" onclick="filtForn('conforme',this)">Conformes</button>
+    <button class="chip" onclick="filtForn('kit-pendente',this)">Kit pendente</button>
+  </div>
+
+  <div class="card">
+    <div class="tw">
+      <table>
+        <thead><tr><th>Fornecedor</th><th class="hide-mob">Disciplina</th><th>Docs ativos</th><th>Padrão Metrô</th><th>Kit enviado</th><th class="hide-mob">Contato</th></tr></thead>
+        <tbody id="forn-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- DISCIPLINAS -->
+<div class="tab" id="tab-disciplinas">
+  <div class="ph"><div class="pt">Disciplinas & Equipe</div><div class="ps">Coordenadores, projetistas e analistas do Metrô</div></div>
+
+  <div class="g2">
+    <div>
+      <div class="st">Disciplinas por coordenador</div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Disciplina</th><th class="hide-mob">Responsável</th><th>Docs</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td class="fw">Elétrica BT</td><td class="hide-mob" style="color:var(--tx2)">Rutec (30+ painéis)</td><td>9</td><td><span class="sema s-red">Vermelho</span></td></tr>
+            <tr><td class="fw">Mecânica</td><td class="hide-mob" style="color:var(--tx2)">Forn. Ponte Rolante</td><td>5</td><td><span class="sema s-red">Vermelho</span></td></tr>
+            <tr><td class="fw">Arquitetura</td><td class="hide-mob" style="color:var(--tx2)">Cistra / Juliana</td><td>3</td><td><span class="sema s-green">Verde</span></td></tr>
+            <tr><td class="fw">Iluminação</td><td class="hide-mob" style="color:var(--tx2)">Juliana (Cistra)</td><td>4</td><td><span class="sema s-amber">Amarelo</span></td></tr>
+            <tr><td class="fw">Tomadas especiais</td><td class="hide-mob" style="color:var(--tx2)">Forn. atestado</td><td>2</td><td><span class="sema s-green">Verde</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="st">Analistas do Metrô</div>
+      <div class="card"><div class="cb" id="analistas-list"></div></div>
+      <div style="margin-top:14px">
+        <div class="st">Reuniões programadas</div>
+        <div class="card"><div class="cb">
+          <div class="cli" style="border:none;padding:9px 0"><div style="flex:1;font-size:13px">Follow-up semanal — Rutec (BT)</div><span class="sema s-green">Toda segunda</span></div>
+          <div class="cli" style="border:none;padding:9px 0;border-top:1px solid var(--bdr)"><div style="flex:1;font-size:13px">Interface Walter — Mecânica/Urgências</div><span class="sema s-blue">Sob demanda</span></div>
+          <div class="cli" style="border:none;padding:9px 0;border-top:1px solid var(--bdr)"><div style="flex:1;font-size:13px">Compatibilização Arquitetura</div><span class="sema s-gray">Quinzenal</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KIT PADRONIZAÇÃO -->
+<div class="tab" id="tab-kit">
+  <div class="ph"><div class="pt">Kit de Padronização</div><div class="ps">Entrega obrigatória a fornecedores no ato da contratação</div></div>
+
+  <div class="notice"><b>Protocolo contratual:</b> A adequação ao padrão do Metrô é exigência contratual — não uma tarefa da coordenação. Fornecedores que não entregam no padrão devem receber este kit e ser notificados formalmente.</div>
+
+  <div class="g2">
+    <div>
+      <div class="st">Checklist de entrega obrigatória</div>
+      <div class="card"><div class="cb" id="checklist-body"></div></div>
+    </div>
+    <div>
+      <div class="st">Guia de IDs — padrão Metrô SP</div>
+      <div class="card">
+        <div class="tw">
+          <table class="id-tbl">
+            <thead><tr><th>Campo</th><th>Formato</th><th>Exemplo</th></tr></thead>
+            <tbody>
+              <tr><td>ID Documento</td><td>[PROJ]-[DISC]-[SEQ]</td><td>PAT-EL-0047</td></tr>
+              <tr><td>Revisão</td><td>R[N]</td><td>R3</td></tr>
+              <tr><td>Disciplina</td><td>2 letras</td><td>EL, ME, AR, IL</td></tr>
+              <tr><td>Assinador RT</td><td>CREA + nome</td><td>CREA-SP 12345</td></tr>
+              <tr><td>Analista Metrô</td><td>Nome + matrícula</td><td>Walter M. #7821</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:13px 16px;border-top:1px solid var(--bdr)">
+          <div class="st">Documentos por equipamento</div>
+          <div style="font-size:12px;color:var(--tx2);line-height:2">
+            Layout / Data sheet &nbsp;·&nbsp; Diagrama elétrico/funcional &nbsp;·&nbsp; Esquema elétrico &nbsp;·&nbsp; Memorial descritivo &nbsp;·&nbsp; ART/RRT &nbsp;·&nbsp; Lista de materiais (LM) &nbsp;·&nbsp; Certificados de conformidade &nbsp;·&nbsp; Atributos de equipamento (viga, talha, tonnage)
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <div class="st">Escalabilidade — projetos futuros</div>
+        <div class="card"><div class="cb" style="font-size:12px;color:var(--tx2);line-height:1.8">
+          Este framework é um <b>ativo estratégico</b> replicável para:<br>
+          <span style="display:inline-flex;align-items:center;gap:6px;margin-top:6px"><span style="color:var(--green)">●</span> Subestação Nália Franco</span><br>
+          <span style="display:inline-flex;align-items:center;gap:6px"><span style="color:var(--green)">●</span> Pátio Penha — Linha 2 Verde (obra 7 anos)</span><br>
+          <span style="display:inline-flex;align-items:center;gap:6px"><span style="color:var(--green)">●</span> Linha Ouro e demais pátios Metrô SP</span>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="st">Ações rápidas</div>
+  <div class="action-row">
+    <button class="abtn"><div class="a-icon ai-g">✉</div><div><div>E-mail para fornecedor</div><div class="a-lbl">Modelo com kit e exigências contratuais</div></div></button>
+    <button class="abtn"><div class="a-icon ai-b">☑</div><div><div>Checklist por equipamento</div><div class="a-lbl">Lista personalizada por tipo</div></div></button>
+    <button class="abtn"><div class="a-icon ai-a">⬡</div><div><div>Ajuda Excel / Power BI</div><div class="a-lbl">Fórmulas para relatório do PW</div></div></button>
+  </div>
+</div>
+
+</main>
+</div><!-- end .app -->
+
+<!-- ── MOBILE BOTTOM NAV ── -->
+<nav class="mobile-nav">
+  <div class="mnav-inner">
+    <button class="mn-item on" id="mn0" onclick="nav('visao',0)">
+      <svg class="mn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Início
+    </button>
+    <button class="mn-item" id="mn1" onclick="nav('rastreador',1)">
+      <svg class="mn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+      Rastreador
+    </button>
+    <button class="mn-item" id="mn2" onclick="nav('medicao',2)">
+      <svg class="mn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+      Medição
+    </button>
+    <button class="mn-item" id="mn3" onclick="nav('fornecedores',3)">
+      <svg class="mn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      Forn.
+    </button>
+    <button class="mn-item" id="mn4" onclick="nav('kit',5)">
+      <svg class="mn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+      Kit
+    </button>
+  </div>
+</nav>
+<button class="mobile-fab" onclick="openModal()">+</button>
+
+<!-- ── MODAL NOVO DOCUMENTO ── -->
+<div class="mo" id="modal-el">
+  <div class="modal">
+    <div class="mh"><div class="mt">Novo documento</div><button class="btn btn-sm" onclick="closeModal()">Fechar</button></div>
+    <div class="fg">
+      <div class="fi"><label>ID do documento</label><input type="text" id="m-id" placeholder="PAT-EL-0048"></div>
+      <div class="fi"><label>Disciplina</label><select id="m-disc"><option>Elétrica</option><option>Mecânica</option><option>Arquitetura</option><option>Iluminação</option></select></div>
+    </div>
+    <div class="fi" style="margin-bottom:12px"><label>Nome do documento</label><input type="text" id="m-nome" placeholder="Ex: Diagrama elétrico QD-07"></div>
+    <div class="fg">
+      <div class="fi"><label>Fornecedor</label><input type="text" id="m-forn" placeholder="Ex: Rutec"></div>
+      <div class="fi"><label>Analista Metrô</label><select id="m-anal"><option>Walter M.</option><option>Analista EL</option><option>Analista AR</option></select></div>
+    </div>
+    <div class="fg">
+      <div class="fi"><label>Revisão atual</label><select id="m-rev"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+      <div class="fi"><label>Revisão máxima</label><select id="m-maxrev"><option>3</option><option>4</option><option selected>5</option></select></div>
+    </div>
+    <div class="fg">
+      <div class="fi"><label>Status / Semáforo</label>
+        <select id="m-status">
+          <option value="analise">Em análise</option>
+          <option value="comentarios">Com comentários (Amarelo)</option>
+          <option value="parado">Parado (Vermelho)</option>
+          <option value="aprovado">Aprovado (Verde)</option>
+        </select>
+      </div>
+      <div class="fi"><label>Data de postagem</label><input type="date" id="m-data"></div>
+    </div>
+    <div class="fi" style="margin-bottom:12px"><label>Comentário do analista (opcional)</label><textarea id="m-cmt" placeholder="Ex: Especificação da viga não está conforme item 4.2..."></textarea></div>
+    <div class="mf">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-grn" onclick="addDoc()">Salvar documento</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──
+let docs = [
+  {id:'PAT-ME-0012',nome:'Layout Ponte Rolante',disc:'Mecânica',forn:'Forn. Ponte Rolante',anal:'Walter M.',rev:5,maxRev:5,status:'parado',dias:8,cmts:[{n:'CMT-041',txt:'Especificação da viga dupla não está conforme item 4.2 da NBR. Passadiço sem dimensões.'}]},
+  {id:'PAT-EL-0031',nome:'Diagrama Rutec QD-07',disc:'Elétrica',forn:'Rutec',anal:'Analista EL',rev:3,maxRev:5,status:'comentarios',dias:12,cmts:[{n:'CMT-077',txt:'Circuito de alimentação sem proteção diferencial indicada.'},{n:'CMT-078',txt:'Numeração de bornes diverge do diagrama funcional Rev.2.'}]},
+  {id:'PAT-EL-0028',nome:'Esquema elétrico QD-03',disc:'Elétrica',forn:'Rutec',anal:'Analista EL',rev:2,maxRev:5,status:'analise',dias:3,cmts:[]},
+  {id:'PAT-IL-0009',nome:'Proj. Exec. Iluminação Vala',disc:'Iluminação',forn:'Cistra',anal:'Analista AR',rev:2,maxRev:5,status:'comentarios',dias:5,cmts:[{n:'CMT-055',txt:'Nível de iluminamento abaixo do mínimo exigido (150 lux). Rever distribuição das luminárias.'}]},
+  {id:'PAT-AR-0004',nome:'Compatibilização Ponte/Arq',disc:'Arquitetura',forn:'Cistra',anal:'Analista AR',rev:1,maxRev:3,status:'aprovado',dias:0,cmts:[]},
+  {id:'PAT-EL-0033',nome:'Circuito alimentação trem',disc:'Elétrica',forn:'Rutec',anal:'Analista EL',rev:1,maxRev:3,status:'analise',dias:3,cmts:[]},
+  {id:'PAT-ME-0015',nome:'Memorial descritivo ponte',disc:'Mecânica',forn:'Forn. Ponte Rolante',anal:'Walter M.',rev:2,maxRev:3,status:'comentarios',dias:4,cmts:[{n:'CMT-062',txt:'Tonnage não está especificada no memorial. ART ausente.'}]},
+  {id:'PAT-EL-0040',nome:'Tomada especial TF-01',disc:'Elétrica',forn:'Forn. Especial',anal:'Analista EL',rev:0,maxRev:2,status:'aprovado',dias:0,cmts:[]},
+  {id:'PAT-IL-0011',nome:'Luminária vala manutenção',disc:'Iluminação',forn:'Cistra',anal:'Analista AR',rev:1,maxRev:3,status:'analise',dias:1,cmts:[]},
+  {id:'PAT-AR-0007',nome:'Planta baixa pátio Rev.2',disc:'Arquitetura',forn:'Cistra',anal:'Analista AR',rev:2,maxRev:4,status:'aprovado',dias:0,cmts:[]},
+  {id:'PAT-EL-0038',nome:'QD-12 diagrama funcional',disc:'Elétrica',forn:'Rutec',anal:'Analista EL',rev:1,maxRev:3,status:'comentarios',dias:6,cmts:[{n:'CMT-089',txt:'Quadro sem diagrama unifilar. Seção dos cabos não dimensionada.'}]},
+  {id:'PAT-EL-0042',nome:'QD-15 circuito tomadas',disc:'Elétrica',forn:'Rutec',anal:'Analista EL',rev:0,maxRev:3,status:'aprovado',dias:0,cmts:[]},
+];
+
+const fornData = [
+  {nome:'Rutec',disc:'Elétrica BT (30+ painéis)',docs:9,conf:'conforme',kit:true,contato:'rutec@email.com'},
+  {nome:'Forn. Ponte Rolante',disc:'Mecânica',docs:5,conf:'nao-conforme',kit:false,contato:'—'},
+  {nome:'Cistra (Juliana)',disc:'Arquitetura / Iluminação',docs:7,conf:'conforme',kit:true,contato:'cistra@email.com'},
+  {nome:'Forn. Especial',disc:'Tomadas TF',docs:2,conf:'kit-pendente',kit:false,contato:'—'},
+];
+
+const analistas = [
+  {ini:'WM',nome:'Walter M.',mat:'#7821',area:'Mecânica / Pontes',rel:'Excelente — atende em urgência antes do SLA de 15 dias'},
+  {ini:'AE',nome:'Analista EL',mat:'#4402',area:'Elétrica BT',rel:'Regular — respeita o prazo de 15 dias'},
+  {ini:'AA',nome:'Analista AR',mat:'#6631',area:'Arquitetura',rel:'Boa relação — respostas consistentes'},
+];
+
+const checklist = [
+  {item:'Folha padrão Metrô preenchida',obrig:true},
+  {item:'Numeração de ID conforme tabela',obrig:true},
+  {item:'Carimbo com disciplina e revisão',obrig:true},
+  {item:'Assinadores (RT + Consórcio + Analista)',obrig:true},
+  {item:'Data sheet / memorial descritivo',obrig:true},
+  {item:'Diagrama elétrico/funcional',obrig:false},
+  {item:'ART ou RRT do responsável técnico',obrig:true},
+  {item:'Certificados de conformidade',obrig:false},
+  {item:'Lista de materiais (LM) formatada',obrig:true},
+  {item:'Atributos de equipamento (viga, talha, tonnage)',obrig:false},
+];
+
+// ── SEMAPHORE LOGIC ──
+function getSemaphore(d) {
+  if(d.status === 'aprovado') return 'green';
+  if(d.status === 'parado' && d.dias >= 15) return 'red';
+  if(d.status === 'comentarios' && d.dias >= 12) return 'red';
+  if(d.status === 'parado') return 'red';
+  if(d.status === 'comentarios') return 'amber';
+  return 'blue'; // em análise
+}
+function semaBadge(s) {
+  const map = {red:'s-red',amber:'s-amber',green:'s-green',blue:'s-blue'};
+  const lbl = {red:'Vermelho',amber:'Amarelo',green:'Verde',blue:'Em análise'};
+  return `<span class="sema ${map[s]}">${lbl[s]}</span>`;
+}
+function slaBadge(dias) {
+  if(dias === 0) return `<span class="sla sla-ok">—</span>`;
+  if(dias >= 15) return `<span class="sla sla-breach">${dias}d ⚠</span>`;
+  if(dias >= 8)  return `<span class="sla sla-risk">${dias}d</span>`;
+  return `<span class="sla sla-ok">${dias}d</span>`;
+}
+
+// ── NAVIGATION ──
+const tabIds = ['visao','rastreador','medicao','fornecedores','disciplinas','kit'];
+function nav(id, mnIdx, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.mn-item').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-' + id).classList.add('on');
+  if(btn) btn.classList.add('on');
+  const mnEl = document.getElementById('mn' + (mnIdx > 4 ? 4 : mnIdx));
+  if(mnEl) mnEl.classList.add('on');
+  // sync desktop sidebar
+  const desktopItems = document.querySelectorAll('#sidebar-desktop .nav-item');
+  const tabIdx = tabIds.indexOf(id);
+  if(desktopItems[tabIdx]) desktopItems[tabIdx].classList.add('on');
+}
+
+// ── SIDEBAR MOBILE ──
+function toggleSidebar() {
+  const ov = document.getElementById('sb-overlay');
+  const sb = document.getElementById('sb-mobile');
+  const open = sb.style.display === 'flex';
+  sb.style.display = open ? 'none' : 'flex';
+  ov.style.display = open ? 'none' : 'block';
+}
+
+// ── RENDER DOCS ──
+function buildTL(cur, max) {
+  let h = '';
+  for(let i = 0; i <= max; i++) {
+    if(i > 0) h += `<div class="rl ${i <= cur ? 'rl-d':'rl-p'}" style="min-width:7px"></div>`;
+    let c = i < cur ? 'rn-d' : i === cur ? 'rn-c' : 'rn-p';
+    h += `<div class="rn ${c}">${i}</div>`;
+  }
+  return h;
+}
+
+function renderDocs() {
+  const q = (document.getElementById('srch').value || '').toLowerCase();
+  const fs = document.getElementById('flt-sem').value;
+  const fd = document.getElementById('flt-disc').value;
+  const fa = document.getElementById('flt-anal').value;
+  const list = docs.filter(d => {
+    const mq = !q || (d.nome+d.id+d.forn).toLowerCase().includes(q);
+    const ms = !fs || getSemaphore(d) === fs;
+    const md = !fd || d.disc === fd;
+    const ma = !fa || d.anal === fa;
+    return mq && ms && md && ma;
+  });
+  const tb = document.getElementById('docs-tbody');
+  if(!list.length) {
+    tb.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--tx3)">Nenhum documento encontrado</td></tr>`;
+    return;
+  }
+  tb.innerHTML = list.map(d => {
+    const sem = getSemaphore(d);
+    const cmtCount = d.cmts.length;
+    return `
+    <tr>
+      <td class="mono">${d.id}</td>
+      <td>
+        <div class="fw" style="font-size:13px">${d.nome}</div>
+        ${cmtCount > 0 ? `<div style="font-size:10px;color:var(--amber);margin-top:2px">${cmtCount} comentário${cmtCount>1?'s':''} aberto${cmtCount>1?'s':''}</div>` : ''}
+      </td>
+      <td class="hide-mob" style="color:var(--tx2);font-size:12px">${d.disc}</td>
+      <td style="font-size:12px">${d.forn}<br><span style="color:var(--tx3);font-size:10px">${d.anal}</span></td>
+      <td class="hide-mob">
+        <div class="rtl">${buildTL(d.rev, d.maxRev)}</div>
+        <div style="font-size:10px;color:var(--tx3);margin-top:3px">Rev.${d.rev}/${d.maxRev}</div>
+      </td>
+      <td>${semaBadge(sem)}</td>
+      <td>${slaBadge(d.dias)}</td>
+      <td><button class="btn btn-sm" onclick="cycleDoc(${docs.indexOf(d)})">Atualizar</button></td>
+    </tr>`;
+  }).join('');
+}
+
+const cycleNext = {parado:'comentarios', comentarios:'analise', analise:'aprovado', aprovado:'parado'};
+function cycleDoc(i) {
+  docs[i].status = cycleNext[docs[i].status];
+  docs[i].dias = 0;
+  renderDocs();
+  updateKPIs();
+}
+
+// ── FORNECEDORES ──
+function renderForn(list) {
+  document.getElementById('forn-tbody').innerHTML = list.map(f => `
+    <tr>
+      <td class="fw">${f.nome}</td>
+      <td class="hide-mob" style="color:var(--tx2);font-size:12px">${f.disc}</td>
+      <td>${f.docs}</td>
+      <td>${f.conf==='conforme'?'<span class="sema s-green">Conforme</span>':f.conf==='nao-conforme'?'<span class="sema s-red">Fora do padrão</span>':'<span class="sema s-amber">Pendente</span>'}</td>
+      <td><span class="sema ${f.kit?'s-green':'s-gray'}">${f.kit?'Enviado':'Pendente'}</span></td>
+      <td class="hide-mob" style="font-size:12px;color:var(--tx3)">${f.contato}</td>
+    </tr>`).join('');
+}
+function filtForn(tipo, el) {
+  document.querySelectorAll('#forn-chips .chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  renderForn(tipo ? fornData.filter(f => f.conf === tipo) : fornData);
+}
+
+// ── KPIs ──
+function updateKPIs() {
+  const sla = docs.filter(d => d.dias >= 15).length;
+  const par = docs.filter(d => d.status === 'parado').length;
+  const com = docs.filter(d => d.status === 'comentarios').length;
+  const apv = docs.filter(d => d.status === 'aprovado').length;
+  document.getElementById('k-sla').textContent = sla;
+  document.getElementById('k-par').textContent = par;
+  document.getElementById('k-com').textContent = com;
+  document.getElementById('k-apv').textContent = apv;
+  document.getElementById('badge-top').textContent = '● ' + par + ' parados';
+  document.getElementById('nb1').textContent = par;
+  document.getElementById('nb1m').textContent = par;
+}
+
+// ── VOLUMETRIC CHART ──
+function renderVolChart() {
+  const revCount = [0,0,0,0,0,0];
+  docs.forEach(d => { if(d.rev <= 5) revCount[d.rev]++; });
+  const max = Math.max(...revCount, 1);
+  document.getElementById('vol-chart').innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:10px;height:100px">
+      ${revCount.map((n,i) => {
+        const h = Math.round((n/max)*80);
+        const col = i>=4?'var(--red)':i>=2?'var(--amber)':'var(--green)';
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <span style="font-size:11px;font-weight:700;color:var(--tx2)">${n}</span>
+          <div style="width:100%;height:${h||4}px;background:${col};border-radius:4px 4px 0 0;transition:.4s ease;min-height:4px"></div>
+          <span style="font-size:10px;color:var(--tx3)">R${i}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="font-size:10px;color:var(--tx3);margin-top:10px;text-align:center">Documentos por revisão atual — pico indica gargalo técnico</div>`;
+}
+
+// ── MEDIÇÃO MENSAL ──
+function renderMedicao() {
+  const meses = [
+    {mes:'Março 2025',postados:8,aprovados:3,devolvidos:4,fabr:1},
+    {mes:'Fevereiro 2025',postados:11,aprovados:5,devolvidos:4,fabr:3},
+    {mes:'Janeiro 2025',postados:6,aprovados:4,devolvidos:2,fabr:2},
+  ];
+  document.getElementById('mes-list').innerHTML = meses.map(m => `
+    <div class="mes-card">
+      <div class="mes-header">
+        <div class="mes-month">${m.mes}</div>
+        <button class="btn btn-sm">Exportar relatório</button>
+      </div>
+      <div class="mes-stats">
+        <div class="mes-stat"><div class="mes-n" style="color:var(--blue)">${m.postados}</div><div class="mes-l">Postados</div></div>
+        <div class="mes-stat"><div class="mes-n" style="color:var(--green)">${m.aprovados}</div><div class="mes-l">Aprovados</div></div>
+        <div class="mes-stat"><div class="mes-n" style="color:var(--amber)">${m.devolvidos}</div><div class="mes-l">Com comentários</div></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:12px;color:var(--tx2)">${m.fabr} equipamento${m.fabr>1?'s':''} liberado${m.fabr>1?'s':''} para fabricação</div>
+        <span class="sema s-green">Faturável</span>
+      </div>
+    </div>`).join('');
+}
+
+// ── COMENTÁRIOS ──
+function renderComentarios() {
+  const allCmts = [];
+  docs.forEach(d => d.cmts.forEach(c => allCmts.push({...c, doc:d.nome, id:d.id, anal:d.anal})));
+  if(!allCmts.length) {
+    document.getElementById('comentarios-list').innerHTML = `<div style="color:var(--tx3);font-size:13px;text-align:center;padding:16px">Nenhum comentário registrado</div>`;
+    return;
+  }
+  document.getElementById('comentarios-list').innerHTML = allCmts.map(c => `
+    <div class="cmt">
+      <div class="cmt-id">${c.n} &nbsp;·&nbsp; ${c.id}</div>
+      <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px">${c.doc}</div>
+      <div class="cmt-txt">${c.txt}</div>
+      <div class="cmt-meta">Analista: ${c.anal}</div>
+    </div>`).join('');
+}
+
+// ── ANALISTAS ──
+function renderAnalistas() {
+  document.getElementById('analistas-list').innerHTML = analistas.map(a => `
+    <div class="ac">
+      <div class="av">${a.ini}</div>
+      <div><div class="an">${a.nome} <span style="font-family:var(--mono);font-size:10px;color:var(--tx3)">${a.mat}</span></div>
+      <div class="am">${a.area} · ${a.rel}</div></div>
+    </div>`).join('');
+}
+
+// ── CHECKLIST ──
+let ckStates = checklist.map(()=>false);
+function renderChecklist() {
+  document.getElementById('checklist-body').innerHTML = checklist.map((c,i) => `
+    <div class="cli">
+      <div class="clb ${ckStates[i]?'ck':''}" onclick="toggleCk(${i})"></div>
+      <span class="cll" style="${ckStates[i]?'text-decoration:line-through;color:var(--tx3)':''}">${c.item}</span>
+      <span class="sema ${c.obrig?'s-red':'s-gray'}" style="font-size:10px">${c.obrig?'Obrigatório':'Opcional'}</span>
+    </div>`).join('');
+}
+function toggleCk(i){ ckStates[i]=!ckStates[i]; renderChecklist(); }
+
+// ── MODAL ──
+function openModal(){ document.getElementById('modal-el').classList.add('open'); document.getElementById('m-data').value=new Date().toISOString().split('T')[0]; }
+function closeModal(){ document.getElementById('modal-el').classList.remove('open'); }
+document.getElementById('modal-el').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+function addDoc() {
+  const cmt = document.getElementById('m-cmt').value.trim();
+  const cmts = cmt ? [{n:'CMT-' + (100+docs.length), txt:cmt}] : [];
+  docs.push({
+    id: document.getElementById('m-id').value || 'PAT-XX-'+(Math.floor(Math.random()*900)+100),
+    nome: document.getElementById('m-nome').value || 'Novo documento',
+    disc: document.getElementById('m-disc').value,
+    forn: document.getElementById('m-forn').value || '—',
+    anal: document.getElementById('m-anal').value,
+    rev: parseInt(document.getElementById('m-rev').value),
+    maxRev: parseInt(document.getElementById('m-maxrev').value),
+    status: document.getElementById('m-status').value,
+    dias: 0, cmts
+  });
+  updateKPIs(); renderDocs(); renderComentarios(); renderVolChart(); closeModal();
+  ['m-id','m-nome','m-forn','m-cmt'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ── INIT ──
+renderDocs();
+renderForn(fornData);
+renderAnalistas();
+renderChecklist();
+renderMedicao();
+renderComentarios();
+renderVolChart();
+updateKPIs();
+</script>
+</body>
+</html>
